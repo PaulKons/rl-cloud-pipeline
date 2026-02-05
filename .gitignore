@@ -1,0 +1,22 @@
+# Python venvs
+worker/
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# Secrets / env files
+.env
+
+# Node-RED (if you ever export backups here)
+node_modules/
+.npm/
+flows_cred.json
+
+# MinIO / RabbitMQ data folders (if present)
+minio-data/
+rabbitmq-data/
+data/
+
+# OS
+.DS_Store

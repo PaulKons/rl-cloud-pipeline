@@ -1,0 +1,90 @@
+services:
+  # RabbitMQ
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"     # AMQP
+      - "15672:15672"   # Web UI
+    environment:
+      # Optional: we could define default vhost/user via env
+      RABBITMQ_DEFAULT_VHOST: ${RABBIT_VHOST}
+      RABBITMQ_DEFAULT_USER: ${RABBIT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBIT_PASS}
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+      - ./rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+      - ./rabbitmq-definitions.json:/etc/rabbitmq/definitions.json:ro
+
+  # MinIO (with UI)
+  minio:
+    image: minio/minio
+    container_name: minio
+    command: server /data --console-address ":9001"
+    ports:
+      - "9100:9000"     # S3 API
+      - "9101:9001"     # Web console
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    volumes:
+     - minio_data:/data
+    
+
+  # Node-RED
+  nodered:
+    image: nodered/node-red
+    container_name: nodered
+    ports:
+      - "1880:1880"
+    depends_on:
+      - rabbitmq
+    volumes: #noder red flows
+      - nodered_data:/data
+
+  # RL Worker
+  
+  rl-worker:
+    build: ./rl_worker
+    container_name: rl_worker
+    depends_on:
+      - rabbitmq
+      - minio
+    environment:
+      # RabbitMQ conn
+      RABBIT_HOST: rabbitmq
+      RABBIT_PORT: "5672"
+      RABBIT_USER: ${RABBIT_USER}
+      RABBIT_PASS: ${RABBIT_PASS}
+      RABBIT_VHOST: ${RABBIT_VHOST}
+
+      RABBIT_EXCHANGE: ${RABBIT_EXCHANGE}
+      RABBIT_EXCHANGE_TYPE: ${RABBIT_EXCHANGE_TYPE}
+      RABBIT_JOB_QUEUE: ${RABBIT_JOB_QUEUE}
+      RABBIT_JOB_BINDING_KEY: ${RABBIT_JOB_BINDING_KEY}
+      RABBIT_RESULT_ROUTING_KEY: ${RABBIT_RESULT_ROUTING_KEY}
+
+      # MinIO connection 
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
+      MINIO_BUCKET: ${MINIO_BUCKET}
+      MINIO_SECURE: ${MINIO_SECURE}
+
+      # Worker defaults
+      DEFAULT_EPISODES: ${DEFAULT_EPISODES}
+      DEFAULT_MODEL_PATH: ${DEFAULT_MODEL_PATH}
+      SLOWDOWN_SEC: ${SLOWDOWN_SEC}
+      MAX_STEPS: ${MAX_STEPS}
+      PYTHONUNBUFFERED: "1"
+
+      # CoppeliaSim host/port
+      COPPELIA_HOST: ${COPPELIA_HOST}
+      COPPELIA_PORT: ${COPPELIA_PORT}
+
+volumes:
+  minio_data:
+    name: minio_data
+  rabbitmq_data:
+    name: rabbitmq_data
+  nodered_data: #noder red flows
