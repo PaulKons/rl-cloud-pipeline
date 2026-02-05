@@ -46,6 +46,8 @@ rl_docker/
 │ ├── requirements.txt
 │ └── ppo_pioneer_multiinput2.zip
 
+## Referals
+- To find the credentials for RabbitMq, MINIO as well as guidelines and info on the project look at EgxeiridioXrhsh & TeuxosSxediasmou.
 
 ## Notes
 - CoppeliaSim runs on the host machine
